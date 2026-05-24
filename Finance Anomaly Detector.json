@@ -1,0 +1,167 @@
+{
+  "name": "Finance Anomaly Detector",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "b56ad56c-f909-4b5a-9ed7-3a4c043f7393",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Wm8Irvfnwrw8mi6M7Awy_1lpfbZG20vncEd434swvGQ",
+          "mode": "list",
+          "cachedResultName": "DATA_1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Wm8Irvfnwrw8mi6M7Awy_1lpfbZG20vncEd434swvGQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 968093973,
+          "mode": "list",
+          "cachedResultName": "Sheet 1 - accounting_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Wm8Irvfnwrw8mi6M7Awy_1lpfbZG20vncEd434swvGQ/edit#gid=968093973"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "0aaf7704-51ff-4f03-b790-ca055cbb5f40",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bFUfy1oIQ2l7UdfS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "925d5777-2325-4432-a1dd-b3fb2bad3472",
+              "leftValue": "={{ Number($json[\"col_18\"]) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "6539b7ed-3509-4e62-b5d4-d252ba4af6f1",
+              "leftValue": "={{ $json[\"col_16\"].toString() }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "a87a112c-aacb-4ff6-8f88-22697ae79d75",
+              "leftValue": "={{ Number($json[\"col_15\"]) }}",
+              "rightValue": 0.5,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": "={{ true }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -32
+      ],
+      "id": "62995ecb-0454-4e18-857a-364cafffc3b9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nconst items = $input.all();\nconst headers = ['transaction_id','date','account_type','amount','accuracy_score','missing_data','outcome','alert'];\nconst rows = items.map(item => {\n  const d = item.json;\n  return [\n    d.accounting_data,\n    d.col_2,\n    d.col_3,\n    d.col_4,\n    d.col_15,\n    d.col_16,\n    d.col_18,\n    'SUSPICIOUS TRANSACTION'\n  ].join(',');\n});\n\nconst csv = [headers.join(','), ...rows].join('\\n');\n\nreturn [{\n  json: {},\n  binary: {\n    data: await this.helpers.prepareBinaryData(\n      Buffer.from(csv), \n      'flagged_transactions.csv', \n      'text/csv'\n    )\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "a9747858-631a-4a7e-8858-4a34624c3aeb",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b146d473-db16-4c83-a77c-330e4f4ff7be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c63ad868ac3eb4b2466b830144f2e7d3c63b10567768d46349597cbb7791c25e"
+  },
+  "id": "ahSbCmPRtKdtkFlI",
+  "tags": []
+}
